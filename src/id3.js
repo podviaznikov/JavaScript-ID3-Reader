@@ -41,7 +41,7 @@
      */
     ID3.loadTags = function(url, cb, options) {
         options = options || {};
-        var dataReader = options["dataReader"] || BufferedBinaryAjax;
+        var dataReader = options["dataReader"];
         
         dataReader(url, function(data) {
             // preload the format identifier
