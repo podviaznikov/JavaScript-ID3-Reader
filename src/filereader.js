@@ -1,10 +1,12 @@
 /**
- * Copyright (c) 2010 António Afonso, antonio.afonso gmail, http://www.aadsm.net/
+ * Copyright (c) 2011 Anton Podviaznikov, podviaznikov@gmail.com
  * MIT License [http://www.opensource.org/licenses/mit-license.php]
  *
  */
-window.FileAPIReader = function(binaryData) {
-    return function(url, fncCallback, fncError) {
-            fncCallback(new BinaryFile(binaryData));
-    }
-};
+ (function(ns) {
+    ns["FileAPIReader"] = function(binaryData) {
+        return function(url, fncCallback, fncError) {
+                fncCallback(new BinaryFile(binaryData));
+        }
+    };
+})(this);

@@ -243,9 +243,11 @@ function BinaryFile(strData, iDataOffset, iDataLength) {
 	// @aadsm
 	this.getStringWithCharsetAt = function(iOffset, iLength, iCharset) {
 		var bytes = this.getBytesAt(iOffset, iLength);
+		var originalString = this.getStringAt(iOffset, iLength);
 		var sString;
-
+        console.log('Charset:',iCharset,jschardet.detect(originalString));
 		switch( iCharset.toLowerCase() ) {
+
 		    case 'utf-16':
 		    case 'utf-16le':
 		    case 'utf-16be':
@@ -255,7 +257,8 @@ function BinaryFile(strData, iDataOffset, iDataLength) {
 		    case 'utf-8':
 		        sString = StringUtils.readUTF8String(bytes);
 		        break;
-
+            case 'iso-8859-1':
+                sString = StringUtils.readWin1251String(originalString);
 		    default:
 		        sString = StringUtils.readNullTerminatedString(bytes);
 		        break;
