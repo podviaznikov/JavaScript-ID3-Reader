@@ -74,32 +74,11 @@
         
     ID3v2.readFrameData['APIC'] = function readPictureFrame(offset, length, data, flags, v) {
         v = v || '3';
-        
-        var start = offset;
-        var charset = getTextEncoding( data.getByteAt(offset) );
-        switch( v ) {
-            case '2':
-                var format = data.getStringAt(offset+1, 3);
-                offset += 4;
-                break;
-                
-            case '3':
-            case '4':
-                var format = data.getStringWithCharsetAt(offset+1, length - (offset-start), charset);
-                offset += 1 + format.bytesReadCount;
-                break;
-        }
-        var bite = data.getByteAt(offset, 1);
-        var type = pictureType[bite];
-        var desc = data.getStringWithCharsetAt(offset+1, length - (offset-start), charset);
-        
-        offset += 1 + desc.bytesReadCount;
-        
         return {
-            "format" : format.toString(),
-            "type" : type,
-            "description" : desc.toString(),
-            "data" : data.getBytesAt(offset, (start+length) - offset)
+            "format" : '',
+            "type" : '',
+            "description" : '',
+            "data" : ''
         };
     };
     

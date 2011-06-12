@@ -242,10 +242,15 @@ function BinaryFile(strData, iDataOffset, iDataLength) {
 	};
 	// @aadsm
 	this.getStringWithCharsetAt = function(iOffset, iLength, iCharset) {
-		var bytes = this.getBytesAt(iOffset, iLength);
-		var originalString = this.getStringAt(iOffset, iLength);
-		var sString;
-        console.log('Charset:',iCharset,jschardet.detect(originalString));
+		if(!(iOffset>0) || !(iLength>0)){
+		    return '';
+		}
+		var bytes = this.getBytesAt(iOffset, iLength),
+		    originalString = this.getStringAt(iOffset, iLength),
+		    iCharset=iCharset || jschardet.detect(originalString).encoding,
+		    sString;
+        console.log('Charset:',iCharset);
+
 		switch( iCharset.toLowerCase() ) {
 
 		    case 'utf-16':
@@ -258,12 +263,26 @@ function BinaryFile(strData, iDataOffset, iDataLength) {
 		        sString = StringUtils.readUTF8String(bytes);
 		        break;
             case 'iso-8859-1':
+                var charsetDetection=jschardet.detect(originalString);
+                console.log('Detection:',charsetDetection);
+                if('TIS-620'===charsetDetection.encoding ||
+                'windows-1253'===charsetDetection.encoding ||
+                'windows-1251'===charsetDetection.encoding ||
+                'EUC-TV'===charsetDetection.encoding){
+                    sString = StringUtils.readWin1251String(originalString);
+                    break;
+                }
+            case 'windows-1251':
                 sString = StringUtils.readWin1251String(originalString);
+                break;
+            case 'maccyrillic':
+                sString = StringUtils.readWin1251String(originalString);
+                break;
 		    default:
 		        sString = StringUtils.readNullTerminatedString(bytes);
 		        break;
 		}
-
+        console.log('Result',sString);
 		return sString;
 	};
 

@@ -43,9 +43,9 @@
     	var offset = data.getLength() - 128;
     	var header = data.getStringAt(offset, 3);
     	if (header == "TAG") {
-    		var title = data.getStringAt(offset + 3, 30).replace(/\0/g, "");
-    		var artist = data.getStringAt(offset + 33, 30).replace(/\0/g, "");
-    		var album = data.getStringAt(offset + 63, 30).replace(/\0/g, "");
+    		var title = data.getStringWithCharsetAt(offset + 3, 30).replace(/\0/g, "");
+    		var artist = data.getStringWithCharsetAt(offset + 33, 30).replace(/\0/g, "");
+    		var album = data.getStringWithCharsetAt(offset + 63, 30).replace(/\0/g, "");
     		var year = data.getStringAt(offset + 93, 4).replace(/\0/g, "");
 
     		var trackFlag = data.getByteAt(offset + 97 + 28);

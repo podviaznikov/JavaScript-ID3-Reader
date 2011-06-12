@@ -117,16 +117,16 @@ var StringUtils = {
           "%u0402%u0403%u201A%u0453%u201E%u2026%u2020%u2021%u20AC%u2030%u0409%u2039%u040A%u040C%u040B%u040F"+
           "%u0452%u2018%u2019%u201C%u201D%u2022%u2013%u2014%u0000%u2122%u0459%u203A%u045A%u045C%u045B%u045F"+
           "%u00A0%u040E%u045E%u0408%u00A4%u0490%u00A6%u00A7%u0401%u00A9%u0404%u00AB%u00AC%u00AD%u00AE%u0407"+
-          "%u00B0%u00B1%u0406%u0456%u0491%u00B5%u00B6%u00B7%u0451%u2116%u0454%u00BB%u0458%u0405%u0455%u0457")
+          "%u00B0%u00B1%u0406%u0456%u0491%u00B5%u00B6%u00B7%u0451%u2116%u0454%u00BB%u0458%u0405%u0455%u0457");
        var code2char = function(code) {
                    if(code >= 0xC0 && code <= 0xFF) return String.fromCharCode(code - 0xC0 + 0x0410)
                    if(code >= 0x80 && code <= 0xBF) return charmap.charAt(code - 0x80)
                    return String.fromCharCode(code)
-                }
-       var res = ""
+                };
+       var res = "";
        for(var i = 0; i < str.length; i++) res = res + code2char(str.charCodeAt(i))
        console.log('Win1251 result:',res);
-       return res
+       return res;
     }
 };
 /**
@@ -373,10 +373,15 @@ function BinaryFile(strData, iDataOffset, iDataLength) {
 	};
 	// @aadsm
 	this.getStringWithCharsetAt = function(iOffset, iLength, iCharset) {
-		var bytes = this.getBytesAt(iOffset, iLength);
-		var originalString = this.getStringAt(iOffset, iLength);
-		var sString;
-        console.log('Charset:',iCharset,jschardet.detect(originalString));
+		if(!(iOffset>0) || !(iLength>0)){
+		    return '';
+		}
+		var bytes = this.getBytesAt(iOffset, iLength),
+		    originalString = this.getStringAt(iOffset, iLength),
+		    iCharset=iCharset || jschardet.detect(originalString).encoding,
+		    sString;
+        console.log('Charset:',iCharset);
+
 		switch( iCharset.toLowerCase() ) {
 
 		    case 'utf-16':
@@ -389,12 +394,26 @@ function BinaryFile(strData, iDataOffset, iDataLength) {
 		        sString = StringUtils.readUTF8String(bytes);
 		        break;
             case 'iso-8859-1':
+                var charsetDetection=jschardet.detect(originalString);
+                console.log('Detection:',charsetDetection);
+                if('TIS-620'===charsetDetection.encoding ||
+                'windows-1253'===charsetDetection.encoding ||
+                'windows-1251'===charsetDetection.encoding ||
+                'EUC-TV'===charsetDetection.encoding){
+                    sString = StringUtils.readWin1251String(originalString);
+                    break;
+                }
+            case 'windows-1251':
                 sString = StringUtils.readWin1251String(originalString);
+                break;
+            case 'maccyrillic':
+                sString = StringUtils.readWin1251String(originalString);
+                break;
 		    default:
 		        sString = StringUtils.readNullTerminatedString(bytes);
 		        break;
 		}
-
+        console.log('Result',sString);
 		return sString;
 	};
 
@@ -496,7 +515,6 @@ function BinaryFile(strData, iDataOffset, iDataLength) {
     
     function readTags(reader, data, url, tags) {
         var tagsFound = reader.readTagsFromData(data, tags);
-        //console.log("Downloaded data: " + data.getDownloadedBytesCount() + "bytes");
         var tags = _files[url] || {};
         for( var tag in tagsFound ) if( tagsFound.hasOwnProperty(tag) ) {
             tags[tag] = tagsFound[tag];
@@ -593,9 +611,9 @@ function BinaryFile(strData, iDataOffset, iDataLength) {
     	var offset = data.getLength() - 128;
     	var header = data.getStringAt(offset, 3);
     	if (header == "TAG") {
-    		var title = data.getStringAt(offset + 3, 30).replace(/\0/g, "");
-    		var artist = data.getStringAt(offset + 33, 30).replace(/\0/g, "");
-    		var album = data.getStringAt(offset + 63, 30).replace(/\0/g, "");
+    		var title = data.getStringWithCharsetAt(offset + 3, 30).replace(/\0/g, "");
+    		var artist = data.getStringWithCharsetAt(offset + 33, 30).replace(/\0/g, "");
+    		var album = data.getStringWithCharsetAt(offset + 63, 30).replace(/\0/g, "");
     		var year = data.getStringAt(offset + 93, 4).replace(/\0/g, "");
 
     		var trackFlag = data.getByteAt(offset + 97 + 28);
@@ -1082,32 +1100,11 @@ function BinaryFile(strData, iDataOffset, iDataLength) {
         
     ID3v2.readFrameData['APIC'] = function readPictureFrame(offset, length, data, flags, v) {
         v = v || '3';
-        
-        var start = offset;
-        var charset = getTextEncoding( data.getByteAt(offset) );
-        switch( v ) {
-            case '2':
-                var format = data.getStringAt(offset+1, 3);
-                offset += 4;
-                break;
-                
-            case '3':
-            case '4':
-                var format = data.getStringWithCharsetAt(offset+1, length - (offset-start), charset);
-                offset += 1 + format.bytesReadCount;
-                break;
-        }
-        var bite = data.getByteAt(offset, 1);
-        var type = pictureType[bite];
-        var desc = data.getStringWithCharsetAt(offset+1, length - (offset-start), charset);
-        
-        offset += 1 + desc.bytesReadCount;
-        
         return {
-            "format" : format.toString(),
-            "type" : type,
-            "description" : desc.toString(),
-            "data" : data.getBytesAt(offset, (start+length) - offset)
+            "format" : '',
+            "type" : '',
+            "description" : '',
+            "data" : ''
         };
     };
     
